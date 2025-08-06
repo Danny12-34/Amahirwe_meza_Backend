@@ -27,7 +27,8 @@ app.use('/api/v1/contracts', require('./Routes/ContractRoutes'));
 app.use('/api/v1/clients', require('./Routes/ClientRoutes'));
 app.use('/api/v1/purchase-orders', require('./Routes/PurchaseOrderRoutes'));
 app.use('/api/v1/supply-orders', require('./Routes/SupplyOrderRoutes'));
-
+app.use('/api/cashrequest', require('./Routes/cashRequestRoutes'));
+app.use('/api/estimation', require('./Routes/estimationRoutes'));
 // Test route
 app.get("/test", (req, res) => {
   res.status(200).send("Hello? 👋");
