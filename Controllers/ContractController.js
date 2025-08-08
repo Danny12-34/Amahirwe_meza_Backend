@@ -6,6 +6,7 @@ const createContract = async (req, res) => {
     const {
       Client_Name,
       DescriptionOfGood,
+      Amount_category,
       Quantity,
       Delivery_location,
       Delivery_deadline,
@@ -22,11 +23,12 @@ const createContract = async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO Contract 
-       (Client_Name, DescriptionOfGood, Quantity, Delivery_location, Delivery_deadline, Contract_Date, Status, Contr_file_path, Created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (Client_Name, DescriptionOfGood,Amount_category, Quantity, Delivery_location, Delivery_deadline, Contract_Date, Status, Contr_file_path, Created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         Client_Name,
         DescriptionOfGood,
+        Amount_category,
         Quantity,
         Delivery_location,
         Delivery_deadline,
@@ -80,6 +82,7 @@ const updateContract = async (req, res) => {
     const {
       Client_Name,
       DescriptionOfGood,
+      Amount_category,
       Quantity,
       Delivery_location,
       Delivery_deadline,
@@ -99,11 +102,12 @@ const updateContract = async (req, res) => {
 
     const [result] = await db.query(
       `UPDATE Contract SET
-        Client_Name=?, DescriptionOfGood=?, Quantity=?, Delivery_location=?, Delivery_deadline=?, Contract_Date=?, Status=?, Contr_file_path=?, Created_by=?
+        Client_Name=?, DescriptionOfGood=?, Amount_category=?, Quantity=?, Delivery_location=?, Delivery_deadline=?, Contract_Date=?, Status=?, Contr_file_path=?, Created_by=?
        WHERE ContractId=?`,
       [
         Client_Name,
         DescriptionOfGood,
+        Amount_category,
         Quantity,
         Delivery_location,
         Delivery_deadline,

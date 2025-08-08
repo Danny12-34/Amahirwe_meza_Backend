@@ -2,17 +2,17 @@ const db = require('../Config/db');
 
 // Create
 exports.createOrder = async (req, res) => {
-  const { Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price } = req.body;
+  const { Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price, Status } = req.body;
 
-  if (!Date_Received || !Client_Name || !Description_of_Goods || !Quantity || !Unit_Price) {
+  if (!Date_Received || !Client_Name || !Description_of_Goods || !Quantity || !Unit_Price|| !Status) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO PurchaseOrders (Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price)
-       VALUES (?, ?, ?, ?, ?)`,
-      [Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price]
+      `INSERT INTO PurchaseOrders (Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price,Status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price,Status]
     );
     res.status(201).json({ message: 'Purchase Order created', id: result.insertId });
   } catch (error) {
@@ -45,14 +45,14 @@ exports.getOrderById = async (req, res) => {
 // Update
 exports.updateOrder = async (req, res) => {
   const { id } = req.params;
-  const { Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price } = req.body;
+  const { Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price,Status } = req.body;
 
   try {
     const [result] = await db.execute(
       `UPDATE PurchaseOrders
-       SET Date_Received = ?, Client_Name = ?, Description_of_Goods = ?, Quantity = ?, Unit_Price = ?
+       SET Date_Received = ?, Client_Name = ?, Description_of_Goods = ?, Quantity = ?, Unit_Price = ?, Status = ?
        WHERE PurchaseOrderId = ?`,
-      [Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price, id]
+      [Date_Received, Client_Name, Description_of_Goods, Quantity, Unit_Price,Status, id]
     );
     res.json({ message: 'Order updated' });
   } catch (error) {
