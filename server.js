@@ -29,6 +29,13 @@ app.use('/api/v1/purchase-orders', require('./Routes/PurchaseOrderRoutes'));
 app.use('/api/v1/supply-orders', require('./Routes/SupplyOrderRoutes'));
 app.use('/api/cashrequest', require('./Routes/cashRequestRoutes'));
 app.use('/api/estimation', require('./Routes/estimationRoutes'));
+app.use('/api/comewith', require('./Routes/Field_documentRoutes'));
+app.use('/uploaded', express.static(path.join(__dirname, 'uploaded')));
+
+//Trash
+
+app.use('/api/Trash', require('./Routes/ClassMarksRoute'));
+app.use('/uploadedTrashDocment', express.static(path.join(__dirname, 'uploadedTrash')));
 // Test route
 app.get("/test", (req, res) => {
   res.status(200).send("Hello? 👋");
