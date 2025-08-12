@@ -31,6 +31,9 @@ app.use('/api/cashrequest', require('./Routes/cashRequestRoutes'));
 app.use('/api/estimation', require('./Routes/estimationRoutes'));
 app.use('/api/comewith', require('./Routes/Field_documentRoutes'));
 app.use('/uploaded', express.static(path.join(__dirname, 'uploaded')));
+app.use('/api/login', require('./Routes/userRoutes'));
+
+app.use('/api/v1/Users', require('./Routes/userRoutes'));
 
 //Trash
 

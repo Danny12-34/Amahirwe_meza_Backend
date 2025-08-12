@@ -11,6 +11,7 @@ const {
   updateContract,
   countContracts,
   autoUpdateContractStatus,
+  cancelContract ,
   deleteContract
 } = require('../Controllers/ContractController');
 
@@ -42,5 +43,6 @@ router.get('/get/:id', getContractById);
 router.get('/count', countContracts);
 router.put('/auto-update-status', autoUpdateContractStatus);
 router.delete('/delete/:id', deleteContract);
+router.put('/cancel/:id', cancelContract);
 
 module.exports = router;

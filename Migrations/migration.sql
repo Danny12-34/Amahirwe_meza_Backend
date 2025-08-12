@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS estimation (
 
 
 -- Fied Document
-CREATE TABLE Trash (
+CREATE TABLE IF NOT EXISTS Trash (
   id INT AUTO_INCREMENT PRIMARY KEY,
   DocID VARCHAR(100) NOT NULL,
   Description  VARCHAR(100) NOT NULL,
@@ -103,3 +103,29 @@ CREATE TABLE Trash (
   FilePath VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- Users
+
+CREATE TABLE IF NOT EXISTS users (
+    UserId INT AUTO_INCREMENT PRIMARY KEY,
+    F_Name VARCHAR(100) NOT NULL,
+    L_Name VARCHAR(100) NOT NULL,
+    Email VARCHAR(150) NOT NULL UNIQUE,
+    Password VARCHAR(255) NOT NULL,
+    Role ENUM('Operation', 'Procurement', 'Field Chief', 'M_D','Admin') NOT NULL DEFAULT 'Operation'
+);
+
+-- Documents
+
+CREATE TABLE IF NOT EXISTS documents_comeWith (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  DocID VARCHAR(100) NOT NULL,
+  DocumentType ENUM('EBM', 'Report', 'Delivery Note') NOT NULL,
+  CreatedAt DATETIME NOT NULL,
+  FileName VARCHAR(255) NOT NULL,
+  FilePath VARCHAR(500) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+

@@ -219,11 +219,34 @@ const autoUpdateContractStatus = async (req, res) => {
   }
 };
 
+// Update contract status to Cancelled
+const cancelContract = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [result] = await db.query(
+      'UPDATE Contract SET Status = ? WHERE ContractId = ?',
+      ['Cancelled', id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'No contract found with this ID' });
+    }
+
+    res.status(200).json({ success: true, message: 'Contract status updated to Cancelled' });
+  } catch (error) {
+    console.error('Error cancelling contract:', error);
+    res.status(500).json({ success: false, message: 'Error cancelling contract', error: error.message });
+  }
+};
+
+
 
 
 module.exports = {
   createContract,
   getAllContracts,
+  cancelContract ,
   getContractById,
   updateContract,
   deleteContract,
