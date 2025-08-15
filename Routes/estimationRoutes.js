@@ -4,7 +4,7 @@ const estimationController = require('../Controllers/estimationController');
 
 router.post('/create', estimationController.createEstimation);
 router.get('/all', estimationController.getEstimations);
-router.get('get/:id', estimationController.getEstimationById);
+router.get('/get/:id', estimationController.getEstimationById);
 router.put('/update/:id', estimationController.updateEstimation);
 router.delete('/delete/:id', estimationController.deleteEstimation);
 

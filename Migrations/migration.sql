@@ -78,6 +78,9 @@ CREATE TABLE IF NOT EXISTS purchaseorders (
 -- estimation table
 CREATE TABLE IF NOT EXISTS estimation (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  B_Code VARCHAR(255),
+  Board_command VARCHAR(255),
+  Site VARCHAR(255),
   description VARCHAR(255) NULL,
   quantity INT NULL,
   u_p_coting DECIMAL(15,2) NULL,
