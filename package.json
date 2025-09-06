@@ -19,7 +19,8 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
-    "pdfkit": "^0.17.1"
+    "pdfkit": "^0.17.1",
+    "pg": "^8.16.3"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,5 @@
     "url": "https://github.com/Danny12-34/Amahirwe_meza_Backend/issues"
   },
   "homepage": "https://github.com/Danny12-34/Amahirwe_meza_Backend#readme",
-  "devDependencies": {},
   "description": ""
 }
