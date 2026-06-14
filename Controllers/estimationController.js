@@ -3,16 +3,14 @@ const db = require('../Config/db');
 // ------------------ CREATE ------------------
 exports.createEstimation = async (req, res) => {
   try {
-    const { B_Code,Site,Board_command, description, quantity, u_p_coting } = req.body;
+    const { B_Code, Site, Board_command, description, quantity, u_p_coting } = req.body;
 
-    // Convert numbers
     const qty = parseFloat(quantity) || 0;
     const UPC = parseFloat(u_p_coting) || 0;
 
-    // Calculations
-    const TPC = UPC * qty; // Total Price Coting
-    const UPM = UPC * 1.1; // Unit Price Market (example logic)
-    const TPM = UPM * qty;  // Total Price Market
+    const TPC = UPC * qty;
+    const UPM = UPC * 1.1;
+    const TPM = UPM * qty;
     const tva = TPC * 0.15;
     const exc_tva = TPC - tva;
     const three_perc = exc_tva * 0.03;
@@ -20,15 +18,37 @@ exports.createEstimation = async (req, res) => {
     const refund = TPM * 0.15;
     const profit = TPC - TPM - t_taxes;
 
-    // Insert into DB
-    const [result] = await db.execute(
-      `INSERT INTO estimation 
-      (B_Code,Site,Board_command, description, quantity, u_p_coting, t_p_coting, u_p_market, t_p_market, tva, exc_tva, three_perc, t_taxes, refund, profit)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [B_Code,Site, Board_command, description, qty, UPC, TPC, UPM, TPM, tva, exc_tva, three_perc, t_taxes, refund, profit]
+    const result = await db.query(
+      `INSERT INTO estimation
+      (B_Code, Site, Board_command, description, quantity,
+       u_p_coting, t_p_coting, u_p_market, t_p_market,
+       tva, exc_tva, three_perc, t_taxes, refund, profit)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       RETURNING id`,
+      [
+        B_Code,
+        Site,
+        Board_command,
+        description,
+        qty,
+        UPC,
+        TPC,
+        UPM,
+        TPM,
+        tva,
+        exc_tva,
+        three_perc,
+        t_taxes,
+        refund,
+        profit
+      ]
     );
 
-    res.status(201).json({ message: 'Estimation created', id: result.insertId });
+    res.status(201).json({
+      message: 'Estimation created',
+      id: result.rows[0].id
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -38,8 +58,12 @@ exports.createEstimation = async (req, res) => {
 // ------------------ READ ALL ------------------
 exports.getEstimations = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM estimation ORDER BY id DESC');
-    res.json(rows);
+    const result = await db.query(
+      'SELECT * FROM estimation ORDER BY id DESC'
+    );
+
+    res.json(result.rows);
+
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -48,9 +72,17 @@ exports.getEstimations = async (req, res) => {
 // ------------------ READ ONE ------------------
 exports.getEstimationById = async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT * FROM estimation WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Estimation not found' });
-    res.json(rows[0]);
+    const result = await db.query(
+      'SELECT * FROM estimation WHERE id = $1',
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Estimation not found' });
+    }
+
+    res.json(result.rows[0]);
+
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -59,15 +91,14 @@ exports.getEstimationById = async (req, res) => {
 // ------------------ UPDATE ------------------
 exports.updateEstimation = async (req, res) => {
   try {
-    const { B_Code,Site,Board_command, description, quantity, u_p_coting } = req.body;
+    const { B_Code, Site, Board_command, description, quantity, u_p_coting } = req.body;
 
     const qty = parseFloat(quantity) || 0;
     const UPC = parseFloat(u_p_coting) || 0;
 
-    // Calculations
-    const TPC = UPC * qty; // Total Price Coting
-    const UPM = UPC * 1.1; // Unit Price Market
-    const TPM = UPM * qty;  // Total Price Market
+    const TPC = UPC * qty;
+    const UPM = UPC * 1.1;
+    const TPM = UPM * qty;
     const tva = TPC * 0.18;
     const exc_tva = TPC - tva;
     const three_perc = TPC * 0.03;
@@ -75,29 +106,50 @@ exports.updateEstimation = async (req, res) => {
     const refund = t_taxes * 0.1;
     const profit = TPM - TPC - t_taxes + refund;
 
-    const [result] = await db.execute(
+    const result = await db.query(
       `UPDATE estimation SET
-        B_Code = ?,
-        Site = ?,
-        Board_command = ?, 
-        description = ?, 
-        quantity = ?, 
-        u_p_coting = ?, 
-        t_p_coting = ?, 
-        u_p_market = ?, 
-        t_p_market = ?, 
-        tva = ?, 
-        exc_tva = ?, 
-        three_perc = ?, 
-        t_taxes = ?, 
-        refund = ?, 
-        profit = ?
-      WHERE id = ?`,
-      [B_Code,Site,Board_command, description, qty, UPC, TPC, UPM, TPM, tva, exc_tva, three_perc, t_taxes, refund, profit, req.params.id]
+        B_Code = $1,
+        Site = $2,
+        Board_command = $3,
+        description = $4,
+        quantity = $5,
+        u_p_coting = $6,
+        t_p_coting = $7,
+        u_p_market = $8,
+        t_p_market = $9,
+        tva = $10,
+        exc_tva = $11,
+        three_perc = $12,
+        t_taxes = $13,
+        refund = $14,
+        profit = $15
+      WHERE id = $16`,
+      [
+        B_Code,
+        Site,
+        Board_command,
+        description,
+        qty,
+        UPC,
+        TPC,
+        UPM,
+        TPM,
+        tva,
+        exc_tva,
+        three_perc,
+        t_taxes,
+        refund,
+        profit,
+        req.params.id
+      ]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Estimation not found' });
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Estimation not found' });
+    }
+
     res.json({ message: 'Estimation updated' });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -107,9 +159,17 @@ exports.updateEstimation = async (req, res) => {
 // ------------------ DELETE ------------------
 exports.deleteEstimation = async (req, res) => {
   try {
-    const [result] = await db.execute('DELETE FROM estimation WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Estimation not found' });
+    const result = await db.query(
+      'DELETE FROM estimation WHERE id = $1',
+      [req.params.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Estimation not found' });
+    }
+
     res.json({ message: 'Estimation deleted' });
+
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }

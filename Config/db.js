@@ -1,11 +1,20 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'amahirwemezadb'
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-module.exports = db;
+// Test connection immediately
+db.query('SELECT NOW()')
+  .then(res => {
+    console.log('✅ Supabase Connected:', res.rows[0].now);
+  })
+  .catch(err => {
+    console.error('❌ DB Connection Error:', err.message);
+  });
 
+module.exports = db;

@@ -1,7 +1,10 @@
 const db = require('../Config/db');
 const bcrypt = require('bcryptjs');
 
-// CREATE
+
+// =========================
+// CREATE USER
+// =========================
 exports.createUser = async (req, res) => {
   try {
     const { F_Name, L_Name, Email, Password, ConfirmPassword, Role } = req.body;
@@ -16,162 +19,288 @@ exports.createUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(Password, 10);
 
-    const sql = 'INSERT INTO users (F_Name, L_Name, Email, Password, Role) VALUES (?, ?, ?, ?, ?)';
-    const [result] = await db.query(sql, [F_Name, L_Name, Email, hashedPassword, Role]);
+    const result = await db.query(
+      `INSERT INTO users (f_name, l_name, email, password, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING user_id`,
+      [F_Name, L_Name, Email, hashedPassword, Role]
+    );
 
-    res.status(201).json({ message: 'User created successfully!', userId: result.insertId });
+    return res.status(201).json({
+      message: 'User created successfully!',
+      userId: result.rows[0].user_id
+    });
+
   } catch (error) {
-    console.error('Error creating user:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
+    console.error('CREATE USER ERROR:', error);
+
+    if (error.code === '23505') {
       return res.status(400).json({ message: 'Email already exists.' });
     }
-    res.status(500).json({ message: 'Server error.' });
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
-// READ ALL
+
+// =========================
+// GET ALL USERS
+// =========================
 exports.getAllUsers = async (req, res) => {
   try {
-    const [results] = await db.query('SELECT UserId, F_Name, L_Name, Email, Role FROM users');
-    res.json(results);
+    const result = await db.query(
+      `SELECT user_id, f_name, l_name, email, role
+       FROM users
+       ORDER BY user_id DESC`
+    );
+
+    return res.json(result.rows);
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+    console.error('GET ALL USERS ERROR:', error);
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
 
-// READ SINGLE
+
+// =========================
+// GET USER BY ID
+// =========================
 exports.getUserById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const [results] = await db.query('SELECT UserId, F_Name, L_Name, Email, Role FROM users WHERE UserId = ?', [id]);
-    if (results.length === 0) return res.status(404).json({ message: 'User not found.' });
-    res.json(results[0]);
+    const result = await db.query(
+      `SELECT user_id, f_name, l_name, email, role
+       FROM users
+       WHERE user_id = $1`,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    return res.json(result.rows[0]);
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
 
-// UPDATE
+
+// =========================
+// UPDATE USER
+// =========================
 exports.updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
     const { F_Name, L_Name, Email, Password, Role } = req.body;
+    const { id } = req.params;
 
     if (!F_Name || !L_Name || !Email || !Role) {
-      return res.status(400).json({ message: 'All required fields must be provided.' });
+      return res.status(400).json({
+        message: 'All required fields must be provided.'
+      });
     }
 
-    let updateQuery = 'UPDATE users SET F_Name = ?, L_Name = ?, Email = ?, Role = ?';
-    const params = [F_Name, L_Name, Email, Role];
+    let query;
+    let params;
 
     if (Password) {
       const hashedPassword = await bcrypt.hash(Password, 10);
-      updateQuery += ', Password = ?';
-      params.push(hashedPassword);
+
+      query = `
+        UPDATE users 
+        SET f_name = $1, l_name = $2, email = $3, role = $4, password = $5
+        WHERE user_id = $6
+      `;
+
+      params = [F_Name, L_Name, Email, Role, hashedPassword, id];
+    } else {
+      query = `
+        UPDATE users 
+        SET f_name = $1, l_name = $2, email = $3, role = $4
+        WHERE user_id = $5
+      `;
+
+      params = [F_Name, L_Name, Email, Role, id];
     }
 
-    updateQuery += ' WHERE UserId = ?';
-    params.push(id);
+    const result = await db.query(query, params);
 
-    const [result] = await db.query(updateQuery, params);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found.' });
+    return res.json({ message: 'User updated successfully.' });
 
-    res.json({ message: 'User updated successfully.' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('UPDATE ERROR:', error);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
-// DELETE
+
+// =========================
+// DELETE USER
+// =========================
 exports.deleteUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const [result] = await db.query('DELETE FROM users WHERE UserId = ?', [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found.' });
-    res.json({ message: 'User deleted successfully.' });
+    const result = await db.query(
+      `DELETE FROM users WHERE user_id = $1`,
+      [req.params.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    return res.json({ message: 'User deleted successfully.' });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
 
-// LOGIN
+
+// =========================
+// LOGIN USER
+// =========================
 exports.loginUser = async (req, res) => {
   try {
     const { Email, Password } = req.body;
 
     if (!Email || !Password) {
-      return res.status(400).json({ message: 'Email and Password are required.' });
+      return res.status(400).json({
+        message: 'Email and Password are required.'
+      });
     }
 
-    const [users] = await db.query('SELECT * FROM users WHERE Email = ?', [Email]);
-    if (users.length === 0) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+    const result = await db.query(
+      `SELECT * FROM users WHERE email = $1`,
+      [Email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        message: 'Invalid email or password.'
+      });
     }
 
-    const user = users[0];
+    const user = result.rows[0];
 
-    const validPassword = await bcrypt.compare(Password, user.Password);
+    const validPassword = await bcrypt.compare(Password, user.password);
+
     if (!validPassword) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+      return res.status(401).json({
+        message: 'Invalid email or password.'
+      });
     }
 
-    // Remove password from user object before sending response
-    const { Password: pwd, ...userWithoutPassword } = user;
+    const { password, ...userWithoutPassword } = user;
 
-    res.json({ user: userWithoutPassword });
+    return res.json({ user: userWithoutPassword });
+
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('LOGIN ERROR:', error);
+
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
   }
 };
 
-// TOTAL USER COUNT
+
+// =========================
+// USER COUNT
+// =========================
 exports.getUserCount = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT COUNT(*) AS totalUsers FROM users');
-    res.json({ totalUsers: rows[0].totalUsers });
+    const result = await db.query(`SELECT COUNT(*) FROM users`);
+
+    return res.json({
+      totalUsers: parseInt(result.rows[0].count)
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
 
-// COUNT USERS BY ROLE
+
+// =========================
+// USERS BY ROLE
+// =========================
 exports.getUserCountByRole = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT Role, COUNT(*) AS count 
-      FROM users 
-      GROUP BY Role
+    const result = await db.query(`
+      SELECT role, COUNT(*) AS count
+      FROM users
+      GROUP BY role
     `);
-    res.json(rows);
+
+    return res.json(result.rows);
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
 
-// COMBINED DASHBOARD STATS
+
+// =========================
+// DASHBOARD STATS
+// =========================
 exports.getUserStats = async (req, res) => {
   try {
-    const [total] = await db.query('SELECT COUNT(*) AS totalUsers FROM users');
-    const [roles] = await db.query(`
-      SELECT Role, COUNT(*) AS count 
-      FROM users 
-      GROUP BY Role
+    const total = await db.query(`SELECT COUNT(*) FROM users`);
+
+    const roles = await db.query(`
+      SELECT role, COUNT(*) AS count
+      FROM users
+      GROUP BY role
     `);
 
-    res.json({
-      totalUsers: total[0].totalUsers,
-      countsByRole: roles
+    return res.json({
+      totalUsers: parseInt(total.rows[0].count),
+      countsByRole: roles.rows
     });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Database error.' });
+
+    return res.status(500).json({
+      message: 'Database error',
+      error: error.message
+    });
   }
 };
