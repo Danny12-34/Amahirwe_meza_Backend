@@ -15,9 +15,23 @@ dotenv.config();
 // ✅ PostgreSQL connection (Supabase)
 const db = require("./Config/db");
 
-// Middleware
+// ✅ FIXED: CORS policy configured dynamically to support both local and Vercel production links
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://amahirwe-meza-frontend-l783-p7bn7sf6j-danny12-34s-projects.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -40,7 +54,9 @@ app.use('/api/cashrequest', require('./Routes/cashRequestRoutes'));
 app.use('/api/estimation', require('./Routes/estimationRoutes'));
 app.use('/api/comewith', require('./Routes/Field_documentRoutes'));
 app.use('/api/login', require('./Routes/userRoutes'));
-app.use('/api/v1/Users', require('./Routes/userRoutes'));
+
+// ✅ FIXED: Changed 'Users' to lowercase 'users' to match your React frontend frontend API endpoint cleanly 
+app.use('/api/v1/users', require('./Routes/userRoutes'));
 app.use('/api/Trash', require('./Routes/ClassMarksRoute'));
 
 // Test route
